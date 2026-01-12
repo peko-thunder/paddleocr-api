@@ -1,0 +1,20 @@
+# Web Framework
+fastapi==0.128.0 # MIT
+uvicorn[standard]==0.40.0 # BSD-3-Clause
+python-multipart==0.0.21 # Apache-2.0
+
+# OCR
+paddlepaddle==3.2.2 # Apache Software License
+paddleocr==3.3.2 # Apache License 2.0
+
+# Image Processing
+opencv-python-headless==4.11.0.86 # Apache 2.0
+Pillow==12.1.0 # MIT-CMU
+numpy==1.26.4 # BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0
+
+# Utilities
+pydantic==2.12.5 # MIT
+
+# Testing
+pytest==9.0.2 # MIT
+httpx==0.28.1 # BSD-3-Clause

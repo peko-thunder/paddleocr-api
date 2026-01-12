@@ -1,0 +1,38 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the
+// README at: https://github.com/devcontainers/templates/tree/main/src/python
+{
+  "name": "dev-container",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "hostRequirements": {
+    "memory": "8gb"
+  },
+  // Features to add to the dev container. More info: https://containers.dev/features.
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  // Configure tool-specific properties.
+  "customizations": {
+    // Configure properties specific to VS Code.
+    "vscode": {
+      "settings": {
+        "chat.disableAIFeatures": true
+      },
+      "extensions": [
+        "ms-python.vscode-pylance",
+        "streetsidesoftware.code-spell-checker",
+        "anthropic.claude-code"
+      ]
+    }
+  },
+
+  "mounts": [
+    "source=claude-code-bash-history-${devcontainerId},target=/command-history,type=volume",
+    "source=claude-code-config-${devcontainerId},target=/home/vscode/.claude,type=volume"
+  ],
+
+  "workspaceFolder": "/workspace",
+  "postCreateCommand": "bash ${containerWorkspaceFolder}/.devcontainer/scripts/install-claude-code.sh && bash ${containerWorkspaceFolder}/.devcontainer/scripts/persist-bash-history.sh",
+  "waitFor": "postCreateCommand"
+}

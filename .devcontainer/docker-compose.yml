@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - TZ=Asia/Tokyo
+      - LANG=en_US.UTF-8
+      - LC_ALL=C.UTF-8
+      - PYTHONUNBUFFERED=1
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace
+      # Optional: PaddleOCR model cache for development
+      # Models are pre-downloaded in the image, so this volume is not required for production
+      # - paddleocr-models:/root/.paddleocr
+      # - paddleocr-models:~/.paddlex/
+    ports:
+      - "8000:8000"
+    tty: true
+
+# volumes:
+#   paddleocr-models:
