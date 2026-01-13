@@ -166,7 +166,11 @@ NFKC正規化（CJK互換漢字 → CJK統合漢字）
 
 ## 関連ファイル
 
-`joyo_kanji.txt` は全てUnicode正規化された漢字で構成されたリストです
+`name_kanji.txt` は`https://kanji.jitenon.jp/cat/namae`の2999文字を抽出したテキストデータ
+
+法務局の戸籍統一文字情報検索の文字数とも一致
+
+https://houmukyoku.moj.go.jp/KOSEKIMOJIDB/M01.html
 
 ## 参考リンク
 
