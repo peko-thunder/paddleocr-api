@@ -20,6 +20,12 @@
 
 > https://www.moj.go.jp/content/001131003.pdf
 
+## CJK互換漢字について
+
+Shift_JISからUnicodeへの変換時に生成されるCJK互換漢字の詳細と、プログラムでの取り扱い方法について。
+
+> [cjk_compatibility_kanji.md](./cjk_compatibility_kanji.md)
+
 ## その他参考サイト
 
 IC運転免許証に格納されたデータを紹介してみる
