@@ -26,6 +26,33 @@ Shift_JISからUnicodeへの変換時に生成されるCJK互換漢字の詳細�
 
 > [cjk_compatibility_kanji.md](./cjk_compatibility_kanji.md)
 
+## 漢字辞典
+
+https://kanji.jitenon.jp/
+
+対象の漢字を取得するクエリ
+
+```javascript
+(function() {
+    // 1. 指定したセレクタに一致する要素をすべて取得
+    const elements = document.querySelectorAll('.parts_box li a');
+    
+    // 2. テキストを抽出し、改行で繋げた文字列にする（前後の空白は削除）
+    const textList = Array.from(elements)
+                          .map(el => el.textContent.trim())
+                          .filter(text => text !== "") // 空文字を除外
+                          .join('\n');
+
+    // 3. コンソール用のcopy関数を使ってクリップボードへ送る
+    if (textList) {
+        copy(textList);
+        console.log("以下の内容をクリップボードにコピーしました：\n" + textList);
+    } else {
+        console.error("対象の要素が見つかりませんでした。");
+    }
+})();
+```
+
 ## その他参考サイト
 
 IC運転免許証に格納されたデータを紹介してみる
