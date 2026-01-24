@@ -39,7 +39,6 @@ def generate(
         stem = Path(text_file_path).stem
         (Path(output_dir) / "images" / stem).mkdir(parents=True, exist_ok=True)
         chars = parse_char_file(text_file_path)
-        chars = chars[210:220]
         for index, char in chars:
             image = generate_char_image(char, font_path, font_size, image_size)
             image.save(Path(output_dir) / "images" / stem / f"{index}.{extension}")
