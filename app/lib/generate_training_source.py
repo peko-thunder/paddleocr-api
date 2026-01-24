@@ -1,10 +1,58 @@
-"""文字リストから文字画像を生成するモジュール"""
+"""文字リストから学習リソースを生成するモジュール"""
 
+import shutil
 import argparse
 import json
 from pathlib import Path
-
+from typing import List
 from PIL import Image, ImageDraw, ImageFont
+
+
+def generate(
+    output_dir: str,
+    text_file_paths: List[str],
+    font_path: str = "fonts/NotoSansJP-Regular.ttf",
+    font_size: int = 16,
+    image_size: tuple[int, int] = (30, 30),
+    extension: str = "jpg",
+) -> None:
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+    # cleanup
+    shutil.rmtree(Path(output_dir) / "images")
+    (Path(output_dir) / "images").mkdir(parents=True, exist_ok=True)
+
+    with open(Path(output_dir) / "config.json", "w", encoding="utf-8") as f:
+        config = {
+            "text_file_paths": text_file_paths,
+            "font_path": font_path,
+            "font_size": font_size,
+            "image_size": f"{image_size[0]}x{image_size[1]}",
+            "extension": extension,
+        }
+        json.dump(config, f, ensure_ascii=False, indent=2)
+
+    label_texts: List[str] = []
+    rec_gt_texts: List[str] = []
+
+    for text_file_path in text_file_paths:
+        stem = Path(text_file_path).stem
+        (Path(output_dir) / "images" / stem).mkdir(parents=True, exist_ok=True)
+        chars = parse_char_file(text_file_path)
+        chars = chars[210:220]
+        for index, char in chars:
+            image = generate_char_image(char, font_path, font_size, image_size)
+            image.save(Path(output_dir) / "images" / stem / f"{index}.{extension}")
+
+            label_key = f"images/{stem}/{index}.{extension}"
+            label_value = f'[{{"transcription": "{char}", "points": [[0, 0], [{image_size[0]}, 0], [{image_size[0]}, {image_size[1]}], [0, {image_size[1]}]], "difficult": false}}]'
+            label_texts.append(f"{label_key}\t{label_value}")
+            rec_gt_texts.append(f"{label_key}\t{char}")
+
+    with open(Path(output_dir) / "Label.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(label_texts))
+    with open(Path(output_dir) / "rec_gt.txt", "w", encoding="utf-8") as f:
+        f.write("\n".join(rec_gt_texts))
 
 
 def parse_char_file(file_path: str) -> list[tuple[int, str]]:
@@ -74,63 +122,6 @@ def generate_char_image(
     return image
 
 
-def generate_images_from_file(
-    text_file_path: str,
-    font_path: str,
-    font_size: int = 64,
-    image_size: tuple[int, int] = (128, 128),
-    extension: str = "png",
-) -> list[dict]:
-    """文字ファイルから全画像を生成し、ログを出力
-
-    Args:
-        text_file_path: 入力文字リストファイルのパス
-        font_path: フォントファイルのパス
-        font_size: フォントサイズ（px）
-        image_size: 画像サイズ (width, height)
-        extension: 出力画像の拡張子
-
-    Returns:
-        生成ログのリスト
-    """
-    chars = parse_char_file(text_file_path)
-
-    file_stem = Path(text_file_path).stem
-    output_dir = Path("public/char_image") / file_stem
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    log_dir = Path("public/gen_image_log")
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    logs = []
-    image_size_str = f"{image_size[0]}x{image_size[1]}"
-
-    for index, char in chars:
-        image = generate_char_image(char, font_path, font_size, image_size)
-
-        image_path = output_dir / f"{index}.{extension}"
-        image.save(image_path)
-
-        log_entry = {
-            "text_file_path": text_file_path,
-            "char": char,
-            "image_path": str(image_path),
-            "font_family": font_path,
-            "font_size": str(font_size),
-            "image_size": image_size_str,
-        }
-        logs.append(log_entry)
-
-    log_file_path = log_dir / f"{file_stem}.json"
-    with open(log_file_path, "w", encoding="utf-8") as f:
-        json.dump(logs, f, ensure_ascii=False, indent=2)
-
-    print(f"Generated {len(logs)} images to {output_dir}")
-    print(f"Log saved to {log_file_path}")
-
-    return logs
-
-
 def parse_image_size(value: str) -> tuple[int, int]:
     """画像サイズ文字列をパース（例: "128x128" -> (128, 128)）"""
     parts = value.lower().split("x")
@@ -140,8 +131,12 @@ def parse_image_size(value: str) -> tuple[int, int]:
 
 
 def main():
-    generate_images_from_file(
-        text_file_path="doc/jis_x_0208_level1_kanji.txt",
+    generate(
+        output_dir="training/t01",
+        text_file_paths=[
+            "doc/jis_x_0208_level3_kanji.txt",
+            "doc/jis_x_0208_level4_kanji.txt"
+        ],
         font_path="fonts/NotoSansJP-Regular.ttf",
         font_size=16,
         image_size=(30, 30),
