@@ -11,13 +11,15 @@ services:
     working_dir: /workspace
     volumes:
       - ..:/workspace
-      # Optional: PaddleOCR model cache for development
-      # Models are pre-downloaded in the image, so this volume is not required for production
-      # - paddleocr-models:/root/.paddleocr
-      # - paddleocr-models:~/.paddlex/
     ports:
       - "8000:8000"
     tty: true
+    deploy:
+      resources:
+        limits:
+          memory: 16G
+        reservations:
+          memory: 8G
 
 # volumes:
 #   paddleocr-models:

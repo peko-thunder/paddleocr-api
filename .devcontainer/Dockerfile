@@ -5,11 +5,13 @@ WORKDIR /workspace
 # Install system dependencies for PaddleOCR and OpenCV
 RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
+    ccache \
+    libxcb1 \
     libgl1 \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev \
+    libxrender1 \
     libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 

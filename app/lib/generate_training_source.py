@@ -11,7 +11,7 @@ from PIL import Image, ImageDraw, ImageFont
 def generate(
     output_dir: str,
     text_file_paths: List[str],
-    font_path: str = "fonts/NotoSansJP-Regular.ttf",
+    font_paths: List[str],
     font_size: int = 16,
     image_size: tuple[int, int] = (30, 30),
     extension: str = "jpg",
@@ -19,13 +19,18 @@ def generate(
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     # cleanup
-    shutil.rmtree(Path(output_dir) / "images")
-    (Path(output_dir) / "images").mkdir(parents=True, exist_ok=True)
+    if (Path(output_dir) / "images").exists():
+        shutil.rmtree(Path(output_dir) / "images")
+        (Path(output_dir) / "images").mkdir(parents=True, exist_ok=True)
+
+    if (Path(output_dir) / "classification").exists():
+        shutil.rmtree(Path(output_dir) / "classification")
+        (Path(output_dir) / "classification").mkdir(parents=True, exist_ok=True)
 
     with open(Path(output_dir) / "config.json", "w", encoding="utf-8") as f:
         config = {
             "text_file_paths": text_file_paths,
-            "font_path": font_path,
+            "font_paths": font_paths,
             "font_size": font_size,
             "image_size": f"{image_size[0]}x{image_size[1]}",
             "extension": extension,
@@ -34,24 +39,51 @@ def generate(
 
     label_texts: List[str] = []
     rec_gt_texts: List[str] = []
+    unicode_char_map = {}
 
     for text_file_path in text_file_paths:
         stem = Path(text_file_path).stem
         (Path(output_dir) / "images" / stem).mkdir(parents=True, exist_ok=True)
         chars = parse_char_file(text_file_path)
-        for index, char in chars:
-            image = generate_char_image(char, font_path, font_size, image_size)
-            image.save(Path(output_dir) / "images" / stem / f"{index}.{extension}")
 
-            label_key = f"images/{stem}/{index}.{extension}"
-            label_value = f'[{{"transcription": "{char}", "points": [[0, 0], [{image_size[0]}, 0], [{image_size[0]}, {image_size[1]}], [0, {image_size[1]}]], "difficult": false}}]'
-            label_texts.append(f"{label_key}\t{label_value}")
-            rec_gt_texts.append(f"{label_key}\t{char}")
+        for font_path in font_paths:
+            font_name = Path(font_path).stem
+            for index, char in chars:
+                image = generate_char_image(char, font_path, font_size, image_size)
+
+                # PaddleOCR ソース
+                label_key = f"images/{stem}/{index}.{extension}"
+                label_value = f'[{{"transcription": "{char}", "points": [[0, 0], [{image_size[0]}, 0], [{image_size[0]}, {image_size[1]}], [0, {image_size[1]}]], "difficult": false}}]'
+                label_texts.append(f"{label_key}\t{label_value}")
+                rec_gt_texts.append(f"{label_key}\t{char}")
+                image.save(Path(output_dir) / "images" / stem / f"{index}.{extension}")
+
+                # Tensorflow ソース
+                unicode_str = char_to_unicode(char)
+                unicode_dir = Path(output_dir) / "classification" / unicode_str
+                unicode_dir.mkdir(parents=True, exist_ok=True)
+                unicode_char_map[unicode_str] = char
+                image.save(unicode_dir / f"{font_name}.{extension}")
+
 
     with open(Path(output_dir) / "Label.txt", "w", encoding="utf-8") as f:
         f.write("\n".join(label_texts))
     with open(Path(output_dir) / "rec_gt.txt", "w", encoding="utf-8") as f:
         f.write("\n".join(rec_gt_texts))
+    with open(Path(output_dir) / "unicode_char.json", "w", encoding="utf-8") as f:
+        json.dump(unicode_char_map, f, ensure_ascii=False, indent=2)
+
+
+def char_to_unicode(char: str) -> str:
+    """文字をUnicodeコードポイント文字列に変換
+
+    Args:
+        char: 変換する文字
+
+    Returns:
+        Unicodeコードポイント文字列（例: "亜" -> "4E9C"）
+    """
+    return format(ord(char), "04X")
 
 
 def parse_char_file(file_path: str) -> list[tuple[int, str]]:
@@ -131,12 +163,24 @@ def parse_image_size(value: str) -> tuple[int, int]:
 
 def main():
     generate(
-        output_dir="training/t01",
+        output_dir="training/t02",
         text_file_paths=[
             "doc/jis_x_0208_level3_kanji.txt",
             "doc/jis_x_0208_level4_kanji.txt"
         ],
-        font_path="fonts/NotoSansJP-Regular.ttf",
+        font_paths = [
+            "fonts/IPAexGothic-Regular.ttf",
+            "fonts/IPAexMincho-Regular.ttf",
+            "fonts/MPlus1c-Regular.ttf",
+            "fonts/MPlus1p-Bold.ttf",
+            "fonts/MPlus1p-Regular.ttf",
+            "fonts/MPlus2p-Regular.ttf",
+            "fonts/NotoSansJP-Bold.ttf",
+            "fonts/NotoSansJP-Light.otf",
+            "fonts/NotoSansJP-Regular.ttf",
+            "fonts/NotoSerifJP-Regular.otf",
+            "fonts/SourceHanSansJP-Regular.otf",
+        ],
         font_size=16,
         image_size=(30, 30),
         extension="jpg",
